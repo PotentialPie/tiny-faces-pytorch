@@ -1,18 +1,27 @@
 .RECIPEPREFIX +=
 
 PYTHON=python3
-ROOT=~/datasets/WIDER
-TRAINDATA=$(ROOT)/wider_face_split/wider_face_train_bbx_gt.txt
-VALDATA=$(ROOT)/wider_face_split/wider_face_val_bbx_gt.txt
+ROOT=~/datasets/coco
+TRAINDATA=$(ROOT)/annotations/bounding_box_annotations_train.json
+VALDATA=$(ROOT)/annotations/bounding_box_annotations_val.json
+EPOCHS=20
+BATCH_SIZE=14
+
+TRAIN_INSTANCES=$(ROOT)/annotations/instances_train2014.json
+
+EVAL_WEIGHTS=weights/checkpoint_1.pth
 
 main: cython
-        $(PYTHON) main.py $(TRAINDATA) --dataset-root $(ROOT)
+        $(PYTHON) main.py $(TRAINDATA) --dataset-root $(ROOT) --epochs $(EPOCHS) --batch-size $(BATCH_SIZE)
 
 resume: cython
         $(PYTHON) main.py $(TRAINDATA) --dataset-root $(ROOT) --resume weights/checkpoint_50.pth --epochs $(EPOCH)
 
 evaluate: cython
-        $(PYTHON) evaluate.py $(VALDATA) --dataset-root $(ROOT) --checkpoint weights/checkpoint_50.pth
+        $(PYTHON) evaluate.py $(VALDATA) --dataset-root $(ROOT) --checkpoint $(EVAL_WEIGHTS)
+
+evaluate-multiscale: cython
+        $(PYTHON) evaluate.py $(VALDATA) --dataset-root $(ROOT) --checkpoint $(EVAL_WEIGHTS) --multiscale
 
 cluster: cython
         cd utils; $(PYTHON) cluster.py $(TRAIN_INSTANCES)
