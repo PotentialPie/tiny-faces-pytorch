@@ -24,24 +24,47 @@ def get_dataloader(datapath, args, num_clusters=25, train=True):
     if not osp.exists(weight_dir):
         os.mkdir(weight_dir)
 
-    dataset = WIDERFace(osp.expanduser(args.traindata), [])
+    if args.dataset == 'COCO':
+        # COCO dataset
+        cluster_file = osp.join("datasets", "coco_clustering.jbl")
+        if osp.exists(cluster_file):
+            clusters = joblib.load(cluster_file)[num_clusters]['medoids']
+        else:
+            dataset = COCO(osp.expanduser(datapath), [], train=train, img_transforms=img_transforms,
+                           dataset_root=osp.expanduser(args.dataset_root))
+            clustering = compute_kmedoids(dataset.get_all_bboxes(), cls=3, indices=num_clusters,
+                                          option='pyclustering', max_clusters=num_clusters)
+            print("Canonical bounding boxes computed")
+            clusters = clustering[num_clusters]['medoids']
+            joblib.dump(clustering, cluster_file, compress=5)
 
-    cluster_file = osp.join(weight_dir, "clustering.jbl")
-    if osp.exists(cluster_file):
-        clusters = joblib.load(cluster_file)[num_clusters]['medoids']
+        clusters = np.array(clusters)
+
+        data_loader = data.DataLoader(
+            COCO(osp.expanduser(datapath), clusters, train=train, img_transforms=img_transforms,
+                 dataset_root=osp.expanduser(args.dataset_root)),
+            batch_size=args.batch_size, shuffle=train,
+            num_workers=args.workers, pin_memory=True)
+
     else:
-        clustering = compute_kmedoids(dataset.get_all_bboxes(), 1, indices=num_clusters,
-                                      option='pyclustering', max_clusters=num_clusters)
-        print("Canonical bounding boxes computed")
-        clusters = clustering[num_clusters]['medoids']
-        joblib.dump(clustering, cluster_file, compress=5)
+        dataset = WIDERFace(osp.expanduser(args.traindata), [])
 
-    # print(clusters)
+        cluster_file = osp.join("dataset", "WIDERFace_clustering.jbl")
+        if osp.exists(cluster_file):
+            clusters = joblib.load(cluster_file)[num_clusters]['medoids']
+        else:
+            clustering = compute_kmedoids(dataset.get_all_bboxes(), 1, indices=num_clusters,
+                                          option='pyclustering', max_clusters=num_clusters)
+            print("Canonical bounding boxes computed")
+            clusters = clustering[num_clusters]['medoids']
+            joblib.dump(clustering, cluster_file, compress=5)
 
-    data_loader = data.DataLoader(
-        WIDERFace(osp.expanduser(datapath), clusters, train=train, img_transforms=img_transforms,
-                  dataset_root=osp.expanduser(args.dataset_root)),
-        batch_size=args.batch_size, shuffle=train,
-        num_workers=args.workers, pin_memory=True)
+        # print(clusters)
+
+        data_loader = data.DataLoader(
+            WIDERFace(osp.expanduser(datapath), clusters, train=train, img_transforms=img_transforms,
+                      dataset_root=osp.expanduser(args.dataset_root)),
+            batch_size=args.batch_size, shuffle=train,
+            num_workers=args.workers, pin_memory=True)
 
     return data_loader, weight_dir
