@@ -1,7 +1,8 @@
 import argparse
 import torch
 from torch import optim
-from models.models import DetectionModel
+# from models.models import DetectionModel
+from models.alternate_model import DetectionModel, hiresnet101
 from models.loss import DetectionCriterion
 from datasets import get_dataloader
 import trainer
@@ -33,9 +34,14 @@ def main():
     train_loader, weights_dir = get_dataloader(args.traindata, args, num_templates)
 
     model = DetectionModel(num_objects=1, num_templates=num_templates)
+    backbone = hiresnet101(pretrained=True)
+
     loss_fn = DetectionCriterion(num_templates)
 
-    optimizer = optim.SGD(model.learnable_parameters(args.lr), lr=args.lr, momentum=args.momentum,
+    learnable_parameters = model.learnable_parameters(args.lr)
+    learnable_parameters.append({'params': backbone.parameters(), 'lr': args.lr})
+
+    optimizer = optim.SGD(learnable_parameters, lr=args.lr, momentum=args.momentum,
                           weight_decay=args.weight_decay)
     # optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
@@ -52,7 +58,7 @@ def main():
     # train and evalute for `epochs`
     for epoch in range(args.start_epoch, args.epochs):
         scheduler.step()
-        trainer.train(model, loss_fn, optimizer, train_loader, epoch, save_path=weights_dir)
+        trainer.train(model, backbone, loss_fn, optimizer, train_loader, epoch, save_path=weights_dir)
 
 
 if __name__ == '__main__':

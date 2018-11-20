@@ -9,7 +9,7 @@ from torchvision import transforms
 import trainer
 import argparse
 from datasets.coco import COCO
-from models.models import DetectionModel
+from models.alternate_model import DetectionModel, hiresnet101
 from pycocotools import coco
 from pycocotools import cocoeval
 
@@ -48,19 +48,23 @@ def dataloader(args):
 
 
 def get_model(checkpoint=None, num_templates=25):
-    model = DetectionModel(num_templates=num_templates)
+    # model = DetectionModel(num_templates=num_templates)
+    model = DetectionModel(num_objects=1, num_templates=num_templates)
+    backbone = hiresnet101(pretrained=True)
+
     if checkpoint:
         checkpoint = torch.load(checkpoint)
         model.load_state_dict(checkpoint["model"])
-    return model
+        backbone.load_state_dict(checkpoint["backbone"])
+    return model, backbone
 
 
-def run(model, val_loader, clusters, prob_thresh, nms_thresh, predictions_file, multiscale=False):
+def run(model, backbone, val_loader, clusters, prob_thresh, nms_thresh, predictions_file, multiscale=False):
     if osp.exists(predictions_file):
         os.remove(predictions_file)
 
     if multiscale:
-        trainer.evaluate_multiscale(model, val_loader, clusters, prob_thresh=prob_thresh, nms_thresh=nms_thresh)
+        trainer.evaluate_multiscale(model, backbone, val_loader, clusters, prob_thresh=prob_thresh, nms_thresh=nms_thresh)
     else:
         trainer.evaluate(model, val_loader, clusters, prob_thresh=prob_thresh, nms_thresh=nms_thresh)
 
@@ -89,9 +93,9 @@ def main():
     num_templates = 25
 
     val_loader, clusters = dataloader(args)
-    model = get_model(args.checkpoint, num_templates=num_templates)
+    model, backbone = get_model(args.checkpoint, num_templates=num_templates)
 
-    run(model, val_loader, clusters, args.prob_thresh, args.nms_thresh, predictions, args.multiscale)
+    run(model, backbone, val_loader, clusters, args.prob_thresh, args.nms_thresh, predictions, args.multiscale)
 
     # Use the COCO API to evaluate
     evaluate(args)
