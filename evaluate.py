@@ -50,13 +50,11 @@ def dataloader(args):
 def get_model(checkpoint=None, num_templates=25):
     # model = DetectionModel(num_templates=num_templates)
     model = DetectionModel(num_objects=1, num_templates=num_templates)
-    backbone = hiresnet101(pretrained=True)
 
     if checkpoint:
         checkpoint = torch.load(checkpoint)
         model.load_state_dict(checkpoint["model"])
-        backbone.load_state_dict(checkpoint["backbone"])
-    return model, backbone
+    return model
 
 
 def run(model, backbone, val_loader, clusters, prob_thresh, nms_thresh, predictions_file, multiscale=False):
@@ -93,9 +91,9 @@ def main():
     num_templates = 25
 
     val_loader, clusters = dataloader(args)
-    model, backbone = get_model(args.checkpoint, num_templates=num_templates)
+    model = get_model(args.checkpoint, num_templates=num_templates)
 
-    run(model, backbone, val_loader, clusters, args.prob_thresh, args.nms_thresh, predictions, args.multiscale)
+    run(model, val_loader, clusters, args.prob_thresh, args.nms_thresh, predictions, args.multiscale)
 
     # Use the COCO API to evaluate
     evaluate(args)

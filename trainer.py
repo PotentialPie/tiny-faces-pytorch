@@ -56,11 +56,8 @@ def draw_bboxes(image, img_id, bboxes, scores, scales, processor):
     processor.render_and_save_bboxes(image, img_id, bboxes, scores, scales)
 
 
-def train(model, backbone, loss_fn, optimizer, dataloader, epoch, save_path):
+def train(model, loss_fn, optimizer, dataloader, epoch, save_path):
     model = model.train()
-    model = model.cuda()
-
-    backbone = backbone.train().cuda()
 
     for idx, (img, class_map, regression_map) in enumerate(dataloader):
         x = img.float().cuda()
@@ -70,8 +67,7 @@ def train(model, backbone, loss_fn, optimizer, dataloader, epoch, save_path):
 
         optimizer.zero_grad()
 
-        feats = backbone(x)
-        output = model(feats)
+        output = model(x)
 
         # visualize_output(img, output, dataloader.dataset.templates)
 
@@ -91,16 +87,14 @@ def train(model, backbone, loss_fn, optimizer, dataloader, epoch, save_path):
         'epoch': epoch + 1,
         'batch_size': dataloader.batch_size,
         'model': model.state_dict(),
-        'backbone': backbone.state_dict(),
         'optimizer': optimizer.state_dict()
     }, filename="checkpoint_{0}.pth".format(epoch+1), save_path=save_path)
 
 
-def evaluate_multiscale(model, backbone, dataloader, templates, prob_thresh=0.65, nms_thresh=0.3, num_templates=25):
+def evaluate_multiscale(model, dataloader, templates, prob_thresh=0.65, nms_thresh=0.3, num_templates=25):
     print("Running multiscale evaluation code")
 
     model = model.eval().cuda()
-    backbone = backbone.eval().cuda()
 
     # Multi scale stuff
     scales_list = [0.7 ** x for x in [4, 3, 2, 1, 0, -1]]
@@ -128,8 +122,7 @@ def evaluate_multiscale(model, backbone, dataloader, templates, prob_thresh=0.65
             # now run the model
             x = img.float().cuda()
 
-            feats = backbone(x)
-            output = model(feats)
+            output = model(x)
 
             # first `num_templates` channels are class maps
             score_cls = torch.sigmoid(output[:, :num_templates, :, :])

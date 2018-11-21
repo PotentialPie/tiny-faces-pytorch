@@ -33,13 +33,10 @@ def main():
 
     train_loader, weights_dir = get_dataloader(args.traindata, args, num_templates)
 
-    model = DetectionModel(num_objects=1, num_templates=num_templates)
-    backbone = hiresnet101(pretrained=True)
-
+    model = DetectionModel(num_objects=1, num_templates=num_templates).cuda()
     loss_fn = DetectionCriterion(num_templates)
 
     learnable_parameters = model.learnable_parameters(args.lr)
-    learnable_parameters.append({'params': backbone.parameters(), 'lr': args.lr})
 
     optimizer = optim.SGD(learnable_parameters, lr=args.lr, momentum=args.momentum,
                           weight_decay=args.weight_decay)
@@ -58,7 +55,7 @@ def main():
     # train and evalute for `epochs`
     for epoch in range(args.start_epoch, args.epochs):
         scheduler.step()
-        trainer.train(model, backbone, loss_fn, optimizer, train_loader, epoch, save_path=weights_dir)
+        trainer.train(model, loss_fn, optimizer, train_loader, epoch, save_path=weights_dir)
 
 
 if __name__ == '__main__':

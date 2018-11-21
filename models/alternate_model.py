@@ -1,7 +1,7 @@
 import math
 from torch import nn
 import torch.utils.model_zoo as model_zoo
-
+from torchvision.models import resnet101
 
 
 class HyperColumn(nn.Module):
@@ -215,6 +215,8 @@ class DetectionModel(nn.Module):
         # the number of scales we wish to train at.
         self.num_scales = num_scales
 
+        self.backbone = hiresnet101(pretrained=True)
+
         self.extractor_type = feature_extractor
         if feature_extractor == "HyperColumn":
             self.feature_extractor = HyperColumn(output=output)
@@ -224,13 +226,15 @@ class DetectionModel(nn.Module):
 
     def learnable_parameters(self, lr, d=1):
         parameters = [
+            {'params': self.backbone.parameters(), 'lr': lr},
             {'params': self.feature_extractor.parameters(), 'lr': lr},  # Be T'Challa. Don't freeze.
             {'params': self.score.parameters(), 'lr': d*lr},
         ]
         return parameters
 
-    def forward(self, x, mask=None):
-        feat = self.feature_extractor(x)
+    def forward(self, x):
+        feats = self.backbone(x)
+        feat = self.feature_extractor(feats)
 
         score = None
         if self.extractor_type == "FPN":
