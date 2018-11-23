@@ -99,10 +99,6 @@ def evaluate_multiscale(model, dataloader, templates, prob_thresh=0.65, nms_thre
     model = model.eval().cuda()
 
     # Multi scale stuff
-    # scaling_factors = [0.25, 0.5, 1, 2]  # 2
-    # scaling_factors = [0.25, 0.5, 1, 2, 4]  # 2
-    # scaling_factors = [1]  # 0
-    # scaling_factors = [0.25, 0.5, 0.7, 0.9, 1, 1.1, 1.5, 2]  # 4
     scales_list = [0.7 ** x for x in [4, 3, 2, 1, 0, -1]]
 
     results = []

@@ -27,6 +27,7 @@ def arguments():
 
 def main():
     args = arguments()
+    print(vars(args))
 
     num_templates = 25  # 29  # 25  # aka the number of clusters
 
