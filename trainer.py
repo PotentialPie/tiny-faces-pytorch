@@ -90,7 +90,7 @@ def train(model, loss_fn, optimizer, dataloader, epoch, save_path):
         'batch_size': dataloader.batch_size,
         'model': model.state_dict(),
         'optimizer': optimizer.state_dict()
-    }, filename="checkpoint_{0}.pth".format(epoch+1), save_path=save_path)
+    }, filename="checkpoint_interpolate.pth", save_path=save_path)
 
 
 def evaluate_multiscale(model, dataloader, templates, prob_thresh=0.65, nms_thresh=0.3, num_templates=25):
