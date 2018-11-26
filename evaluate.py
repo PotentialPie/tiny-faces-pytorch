@@ -57,12 +57,12 @@ def get_model(checkpoint=None, num_templates=25):
     return model
 
 
-def run(model, backbone, val_loader, clusters, prob_thresh, nms_thresh, predictions_file, multiscale=False):
+def run(model, val_loader, clusters, prob_thresh, nms_thresh, predictions_file, multiscale=False):
     if osp.exists(predictions_file):
         os.remove(predictions_file)
 
     if multiscale:
-        trainer.evaluate_multiscale(model, backbone, val_loader, clusters, prob_thresh=prob_thresh, nms_thresh=nms_thresh)
+        trainer.evaluate_multiscale(model, val_loader, clusters, prob_thresh=prob_thresh, nms_thresh=nms_thresh)
     else:
         trainer.evaluate(model, val_loader, clusters, prob_thresh=prob_thresh, nms_thresh=nms_thresh)
 
