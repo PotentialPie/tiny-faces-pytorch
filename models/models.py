@@ -19,7 +19,7 @@ class DetectionModel(nn.Module):
     def learnable_parameters(self, lr):
         parameters = [
             {'params': self.model.parameters(), 'lr': lr},  # Be T'Challa. Don't freeze.
-            {'params': self.score_res3.parameters(), 'lr': 0.1*lr},
+            {'params': self.score_res3.parameters(), 'lr': 1*lr},
             {'params': self.score_res4.parameters(), 'lr': 1*lr},
         ]
         return parameters

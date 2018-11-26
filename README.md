@@ -2,6 +2,7 @@
 Finding Tiny Faces in PyTorch
 
 This branch uses `nn.functional.interpolate` for bilinear interpolation instead of using the ConvTranspose2d layer.
+Also, all the skip layers have the same learning rate.
 
 Results on COCO:
 
