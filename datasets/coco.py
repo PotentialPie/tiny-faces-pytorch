@@ -9,6 +9,7 @@ from torchvision import transforms
 from torch.utils.data import dataset
 from .processor import DataProcessor
 import warnings
+from tqdm import tqdm
 
 
 class COCO(dataset.Dataset):
@@ -35,7 +36,7 @@ class COCO(dataset.Dataset):
 
         # self.data = data
         self.data = []
-        for x in data:
+        for x in tqdm(data, total=len(data)):
             categories = [b['category_id'] for b in x['bboxes']]
             if 3 in categories:  # if there is a car bounding box
                 # filter out the bounding boxes for only cars
@@ -93,26 +94,42 @@ class COCO(dataset.Dataset):
         img = np.array(image)
 
         # Randomly resize the image
+        # rnd = np.random.rand()
+        # if rnd < 1 / 3:
+        #     # resize by half
+        #     img = transform.rescale(img, 0.5, multichannel=True, mode='reflect', anti_aliasing=True)
+        #     # scaled_shape = (int(0.5 * image.height), int(0.5 * image.width))
+        #     # image = transforms.functional.resize(image, scaled_shape)
+        #
+        #     bboxes = bboxes / 2
+        # elif rnd > 2 / 3:
+        #     # double size
+        #     img = transform.rescale(img, 2, multichannel=True, mode='reflect', anti_aliasing=True)
+        #     # scaled_shape = (int(2 * image.height), int(2 * image.width))
+        #     # image = transforms.functional.resize(image, scaled_shape)
+        #     bboxes = bboxes * 2
+        #
+        # with warnings.catch_warnings():
+        #     warnings.simplefilter("ignore")
+        #     # skimage scales from 255 to -1/1 range, thus we scale it back
+        #     img = img_as_ubyte(img)
+        # # img = np.array(image)
         rnd = np.random.rand()
         if rnd < 1 / 3:
             # resize by half
-            img = transform.rescale(img, 0.5, multichannel=True, mode='reflect', anti_aliasing=True)
-            # scaled_shape = (int(0.5 * image.height), int(0.5 * image.width))
-            # image = transforms.functional.resize(image, scaled_shape)
-
+            # img = transform.rescale(img, 0.5, multichannel=True, mode='reflect', anti_aliasing=True)
+            scaled_shape = (int(0.5 * image.height), int(0.5 * image.width))
+            image = transforms.functional.resize(image, scaled_shape)
             bboxes = bboxes / 2
+
         elif rnd > 2 / 3:
             # double size
-            img = transform.rescale(img, 2, multichannel=True, mode='reflect', anti_aliasing=True)
-            # scaled_shape = (int(2 * image.height), int(2 * image.width))
-            # image = transforms.functional.resize(image, scaled_shape)
+            # img = transform.rescale(img, 2, multichannel=True, mode='reflect', anti_aliasing=True)
+            scaled_shape = (int(2 * image.height), int(2 * image.width))
+            image = transforms.functional.resize(image, scaled_shape)
             bboxes = bboxes * 2
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            # skimage scales from 255 to -1/1 range, thus we scale it back
-            img = img_as_ubyte(img)
-        # img = np.array(image)
+        img = np.array(image)
 
         img, bboxes, paste_box = self.processor.crop_image(img, bboxes)
         pad_mask = self.processor.get_padding(paste_box)
