@@ -5,14 +5,16 @@ ROOT=~/datasets/coco
 TRAINDATA=$(ROOT)/annotations/bounding_box_annotations_train.json
 VALDATA=$(ROOT)/annotations/bounding_box_annotations_val.json
 EPOCHS=50
-BATCH_SIZE=14
+BATCH_SIZE=12
 
 TRAIN_INSTANCES=$(ROOT)/annotations/instances_train2014.json
 
 EVAL_WEIGHTS=weights/checkpoint_50.pth
 WEIGHTS_DIR=weights
 
-main: cython
+main: train evaluate-multiscale
+
+train: cython
         $(PYTHON) main.py $(TRAINDATA) --dataset-root $(ROOT) --epochs $(EPOCHS) --batch-size $(BATCH_SIZE)
 
 resume: cython
@@ -22,7 +24,7 @@ evaluate: cython
         $(PYTHON) evaluate.py $(VALDATA) --dataset-root $(ROOT) --checkpoint $(EVAL_WEIGHTS)
 
 evaluate-multiscale: cython
-        $(PYTHON) evaluate.py $(VALDATA) --dataset-root $(ROOT) --checkpoint $(WEIGHTS_DIR)/checkpoint_$(EPOCHS)_coco.pth --multiscale
+        $(PYTHON) evaluate.py $(VALDATA) --dataset-root $(ROOT) --checkpoint $(WEIGHTS_DIR)/checkpoint_torchvision_resize.pth --multiscale
 
 cluster: cython
         cd utils; $(PYTHON) cluster.py $(TRAIN_INSTANCES)
